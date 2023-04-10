@@ -1,5 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-pl.smarthouse.smartmonitoring.configuration.MongoConfig,\
 pl.smarthouse.smartmonitoring.service.CompareProcessor,\
 pl.smarthouse.smartmonitoring.service.MonitoringScheduler,\
 pl.smarthouse.smartmonitoring.service.MonitoringService\
