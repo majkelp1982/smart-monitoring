@@ -4,7 +4,6 @@ import static pl.smarthouse.smartmonitoring.utils.CloneUtils.cloneObject;
 
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.stereotype.Service;
@@ -13,7 +12,6 @@ import pl.smarthouse.sharedobjects.enums.Compare;
 import reactor.core.publisher.Mono;
 
 @Service
-@Setter
 @RequiredArgsConstructor
 @Slf4j
 public class MonitoringService {
