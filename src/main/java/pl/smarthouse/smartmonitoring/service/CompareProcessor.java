@@ -1,21 +1,17 @@
 package pl.smarthouse.smartmonitoring.service;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import pl.smarthouse.sharedobjects.dao.ModuleDao;
 import pl.smarthouse.sharedobjects.enums.Compare;
-import pl.smarthouse.smartmodule.model.actors.type.bme280.Bme280Response;
 import pl.smarthouse.smartmonitoring.exception.ComparatorDefinitionException;
 import pl.smarthouse.smartmonitoring.exception.CompareProcessorException;
-import pl.smarthouse.smartmonitoring.model.Bme280ResponseCompareProperties;
 import pl.smarthouse.smartmonitoring.model.CompareProperties;
+import pl.smarthouse.smartmonitoring.model.PrimitiveField;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -27,24 +23,32 @@ public class CompareProcessor {
   private final HashMap<String, CompareProperties> compareMap = new HashMap<>();
 
   public void addMap(final String fieldName, final CompareProperties compareProperties) {
+    if (Objects.nonNull(compareMap.get(fieldName))) {
+      throw new ComparatorDefinitionException(
+          String.format("Compare property for: %s, already exist", fieldName));
+    }
     compareMap.put(fieldName, compareProperties);
   }
 
   public Mono<Compare> checkIfSaveRequired(
-      final ModuleDao currentModuleDao, final ModuleDao referenceModuleDao) {
-    return Mono.justOrEmpty(currentModuleDao)
+      final HashMap<String, PrimitiveField> currentPrimitives,
+      final HashMap<String, PrimitiveField> referencePrimitives) {
+    return Mono.justOrEmpty(currentPrimitives)
         .switchIfEmpty(
             Mono.defer(
                 () ->
                     Mono.error(
                         new CompareProcessorException(
-                            "Before checking if save required, module configuration DAO object need to be set"))))
-        .flatMapMany(moduleDao -> Flux.fromArray(moduleDao.getClass().getDeclaredFields()))
+                            "Before checking if save required, primitive map need to be set"))))
+        .flatMapMany(currentPrimitivesMap -> Flux.fromIterable(currentPrimitivesMap.keySet()))
         .flatMap(
-            field -> {
+            name -> {
               try {
                 return Mono.just(
-                    checkIfSaveRequiredByValue(currentModuleDao, referenceModuleDao, field));
+                    checkIfSaveRequiredByValue(
+                        currentPrimitives.get(name).getField(),
+                        referencePrimitives.get(name).getField(),
+                        name));
               } catch (final Exception exception) {
                 return Mono.error(exception);
               }
@@ -62,78 +66,34 @@ public class CompareProcessor {
   public Compare checkIfSaveRequiredByValue(
       final @NonNull Object currentValue,
       @NonNull final Object referenceValue,
-      @NonNull final Field field)
-      throws IllegalAccessException, NoSuchFieldException {
-    if (field.isAnnotationPresent(org.springframework.data.annotation.Transient.class)) {
-      return Compare.OK;
-    }
-    final Field currentField = currentValue.getClass().getDeclaredField(field.getName());
-    final Field referenceField = referenceValue.getClass().getDeclaredField(field.getName());
-    final CompareProperties compareProperties = compareMap.get(field.getName());
+      @NonNull final String name) {
+    final CompareProperties compareProperties = compareMap.get(name);
+
     if (Objects.isNull(compareProperties)) {
       throw new CompareProcessorException(
           String.format(
-              "No compare properties set for: %s, if not needed field should be marked as transient",
-              field.getName()));
+              "No compare properties set for: %s. Should be marked as transient, if field not needed",
+              name));
     }
-    if (!compareProperties.getClassType().equals(field.getGenericType())) {
+    if (!currentValue
+        .getClass()
+        .getTypeName()
+        .toLowerCase()
+        .contains(compareProperties.getClassType().toString().toLowerCase())) {
       throw new CompareProcessorException(
           String.format(
               "Provided compare property for field: %s is wrong. Expected type: %s, but is %s",
-              field.getName(), field.getGenericType(), compareProperties.getClassType()));
+              name, currentValue.getClass().getTypeName(), compareProperties.getClassType()));
     }
 
-    final String classFullName = (field.getType()).toString();
-    final String className =
-        classFullName.substring(classFullName.lastIndexOf(".") + 1).toLowerCase();
-    currentField.setAccessible(true);
-    referenceField.setAccessible(true);
-    switch (className) {
+    switch (compareProperties.getClassType().toString()) {
       case "int":
-        return isSaveRequired(
-            (int) currentField.get(currentValue),
-            (int) referenceField.get(referenceValue),
-            compareProperties);
+        return isSaveRequired((int) currentValue, (int) referenceValue, compareProperties);
       case "double":
       case "float":
-        return isSaveRequired(
-            (double) currentField.get(currentValue),
-            (double) referenceField.get(referenceValue),
-            compareProperties);
+        return isSaveRequired((double) currentValue, (double) referenceValue, compareProperties);
       case "boolean":
-        return isSaveRequired(
-            (boolean) currentField.get(currentValue),
-            (boolean) referenceField.get(referenceValue),
-            compareProperties);
-      case "bme280response":
-        {
-          final Bme280Response bme280ResponseCurrent =
-              (Bme280Response) currentField.get(currentValue);
-          final Bme280Response bme280ResponseReference =
-              (Bme280Response) referenceField.get(referenceValue);
-          final Bme280ResponseCompareProperties bme280ResponseCompareProperties =
-              (Bme280ResponseCompareProperties) compareProperties;
-          final Compare compareTemperature =
-              isSaveRequired(
-                  bme280ResponseCurrent.getTemperature(),
-                  bme280ResponseReference.getTemperature(),
-                  bme280ResponseCompareProperties.getTemperature());
-          final Compare compareHumidity =
-              isSaveRequired(
-                  bme280ResponseCurrent.getHumidity(),
-                  bme280ResponseReference.getHumidity(),
-                  bme280ResponseCompareProperties.getHumidity());
-          final Compare comparePressure =
-              isSaveRequired(
-                  bme280ResponseCurrent.getPressure(),
-                  bme280ResponseReference.getPressure(),
-                  bme280ResponseCompareProperties.getPressure());
-
-          return List.of(compareTemperature, compareHumidity, comparePressure)
-                  .contains(Compare.SAVE_REQUIRED)
-              ? Compare.SAVE_REQUIRED
-              : Compare.OK;
-        }
+        return isSaveRequired((boolean) currentValue, (boolean) referenceValue, compareProperties);
       default:
         throw new ComparatorDefinitionException(
             String.format(

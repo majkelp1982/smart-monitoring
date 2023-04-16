@@ -12,7 +12,7 @@
 
     <groupId>pl.smarthouse</groupId>
     <artifactId>smart-monitoring</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <name>smart-monitoring</name>
     <description>Monitor and store in database module dao objects</description>
 

@@ -3,12 +3,15 @@ package pl.smarthouse.smartmonitoring.service;
 import static pl.smarthouse.smartmonitoring.utils.CloneUtils.cloneObject;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.stereotype.Service;
 import pl.smarthouse.sharedobjects.dao.ModuleDao;
 import pl.smarthouse.sharedobjects.enums.Compare;
+import pl.smarthouse.smartmonitoring.model.PrimitiveField;
+import pl.smarthouse.smartmonitoring.utils.PrimitiveFieldFinder;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -17,19 +20,21 @@ import reactor.core.publisher.Mono;
 public class MonitoringService {
   private final CompareProcessor compareProcessor;
   private final ReactiveMongoTemplate reactiveMongoTemplate;
-  private ModuleDao currentModuleDao;
-  private ModuleDao referenceModuleDao;
+  private ModuleDao moduleDao;
+  private HashMap<String, PrimitiveField> currentPrimitives;
+  private HashMap<String, PrimitiveField> referencePrimitives;
 
   public void process() {
-    compareProcessor
-        .checkIfSaveRequired(currentModuleDao, referenceModuleDao)
+    Mono.just(getPrimitiveFields(moduleDao))
+        .flatMap(
+            signal -> compareProcessor.checkIfSaveRequired(currentPrimitives, referencePrimitives))
         .flatMap(
             compare -> {
               if (Compare.SAVE_REQUIRED.equals(compare)) {
-                currentModuleDao.setSaveTimestamp(LocalDateTime.now());
+                moduleDao.setSaveTimestamp(LocalDateTime.now());
                 return reactiveMongoTemplate
-                    .save(currentModuleDao, currentModuleDao.getModuleName().toLowerCase())
-                    .doOnSuccess(signal -> setReferenceObjectToCurrent())
+                    .save(moduleDao, moduleDao.getModuleName().toLowerCase())
+                    .doOnSuccess(signal -> cloneCurrentPrimitiveFieldsToReferenceMap())
                     .doOnSuccess(signal -> log.info("Save dao object successful"));
               } else {
                 return Mono.empty();
@@ -45,11 +50,20 @@ public class MonitoringService {
   }
 
   public void setModuleDaoObject(final ModuleDao moduleDao) {
-    this.currentModuleDao = moduleDao;
-    referenceModuleDao = cloneObject(moduleDao);
+    this.moduleDao = moduleDao;
+    getPrimitiveFields(moduleDao);
+    referencePrimitives = new HashMap<>();
+    cloneCurrentPrimitiveFieldsToReferenceMap();
   }
 
-  private void setReferenceObjectToCurrent() {
-    referenceModuleDao = cloneObject(currentModuleDao);
+  private HashMap<String, PrimitiveField> getPrimitiveFields(final ModuleDao moduleDao) {
+    currentPrimitives = PrimitiveFieldFinder.findPrimitiveFields(moduleDao);
+    return currentPrimitives;
+  }
+
+  private void cloneCurrentPrimitiveFieldsToReferenceMap() {
+    this.referencePrimitives.clear();
+    currentPrimitives.forEach(
+        (name, primitiveField) -> this.referencePrimitives.put(name, cloneObject(primitiveField)));
   }
 }
