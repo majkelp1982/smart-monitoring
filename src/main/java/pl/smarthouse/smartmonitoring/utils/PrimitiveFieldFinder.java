@@ -1,6 +1,7 @@
 package pl.smarthouse.smartmonitoring.utils;
 
 import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import pl.smarthouse.smartmonitoring.model.PrimitiveField;
 
@@ -19,7 +20,11 @@ public class PrimitiveFieldFinder {
         continue;
       }
 
-      if (fieldType.isPrimitive()) {
+      if (field.getType().equals(String.class) || field.getType().equals(LocalDateTime.class)) {
+        continue;
+      }
+
+      if (fieldType.isPrimitive() || fieldType.isEnum()) {
         primitiveFields.put(fieldName, new PrimitiveField(getFieldObject(object, field)));
       } else if (isWrapperType(fieldType)) {
         primitiveFields.put(fieldName, new PrimitiveField(getFieldObject(object, field)));
