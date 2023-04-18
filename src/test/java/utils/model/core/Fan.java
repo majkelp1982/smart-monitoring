@@ -1,12 +1,12 @@
-package utils.model;
+package utils.model.core;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
+@Builder
 public class Fan {
   @Min(value = 0)
   @Max(value = 100)
