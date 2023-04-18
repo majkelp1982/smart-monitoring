@@ -15,7 +15,6 @@ import utils.model.enums.State;
 @Data
 @SuperBuilder
 public class VentModuleDao extends ModuleDao {
-  // TODO temporary transient
   @Transient private final HashMap<ZoneName, ZoneDao> zoneDaoHashMap;
   private final Fans fans;
   private final Throttle intakeThrottle;

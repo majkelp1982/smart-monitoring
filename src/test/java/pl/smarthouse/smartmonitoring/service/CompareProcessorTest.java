@@ -1,57 +1,59 @@
 package pl.smarthouse.smartmonitoring.service;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import static pl.smarthouse.smartmodule.model.actors.type.pca9685.Pca9685CommandType.WRITE_SERVO0_MICROSECONDS;
+
+import java.util.HashMap;
 import org.junit.jupiter.api.Test;
 import pl.smarthouse.sharedobjects.dao.ModuleDao;
-import utils.TestModuleDao;
+import pl.smarthouse.smartmodule.model.actors.type.bme280.Bme280Response;
+import pl.smarthouse.smartmodule.model.actors.type.ds18b20.Ds18b20Result;
+import pl.smarthouse.smartmonitoring.model.PrimitiveField;
+import pl.smarthouse.smartmonitoring.utils.PrimitiveFieldFinder;
+import utils.model.VentModuleDao;
+import utils.model.core.*;
 
 class CompareProcessorTest {
 
   @Test
   void findingFields() {
-    ModuleDao moduleDao = TestModuleDao.builder().moduleName("testModule").build();
-    ArrayList<CompareField> primitiveFields = getPrimitiveFields(moduleDao);
-    System.out.println(primitiveFields);
+    ModuleDao moduleDao = createVentModuleDao();
+    HashMap<String, PrimitiveField> primitiveFields =
+        PrimitiveFieldFinder.findPrimitiveFields(moduleDao);
+
+    primitiveFields.keySet().stream().sorted().forEach(key -> System.out.println(key));
   }
 
-  @AllArgsConstructor
-  @Data
-  public class CompareField {
-    String name;
-    Object field;
-  }
-
-  public ArrayList<CompareField> getPrimitiveFields(Object obj) {
-    ArrayList<CompareField> results = new ArrayList<>();
-    StringBuilder prefixName = new StringBuilder();
-    for (Field field : obj.getClass().getDeclaredFields()) {
-      field.setAccessible(true);
-
-      try {
-        Object fieldValue = field.get(obj);
-
-        if (isPrimitive(field.getType())) {
-          results.add(new CompareField(prefixName + field.getName(), fieldValue));
-        } else if (fieldValue != null) {
-          prefixName.append(field.getName());
-          prefixName.append(".");
-          results.addAll(getPrimitiveFields(fieldValue));
-        }
-      } catch (IllegalAccessException e) {
-        // handle exception
-      }
-    }
-
-    return results;
-  }
-
-  private boolean isPrimitive(Class<?> clazz) {
-    return clazz.isPrimitive()
-        || clazz == String.class
-        || clazz == Integer.class
-        || clazz == Boolean.class;
+  private VentModuleDao createVentModuleDao() {
+    return VentModuleDao.builder()
+        .moduleName("testModule")
+        .zoneDaoHashMap(new HashMap<>())
+        .fans(
+            Fans.builder()
+                .inlet(Fan.builder().currentSpeed(1).goalSpeed(0).build())
+                .outlet(Fan.builder().currentSpeed(1).goalSpeed(0).build())
+                .build())
+        .airExchanger(
+            AirExchanger.builder()
+                .inlet(new Bme280Response())
+                .outlet(new Bme280Response())
+                .freshAir(new Bme280Response())
+                .userAir(new Bme280Response())
+                .build())
+        .forcedAirSystemExchanger(
+            ForcedAirSystemExchanger.builder()
+                .watterIn(new Ds18b20Result())
+                .watterOut(new Ds18b20Result())
+                .airIn(new Ds18b20Result())
+                .airOut(new Ds18b20Result())
+                .build())
+        .intakeThrottle(
+            Throttle.builder()
+                .openPosition(0)
+                .closePosition(1)
+                .goalPosition(1)
+                .currentPosition(0)
+                .commandType(WRITE_SERVO0_MICROSECONDS)
+                .build())
+        .build();
   }
 }
