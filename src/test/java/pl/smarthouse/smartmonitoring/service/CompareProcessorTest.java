@@ -3,10 +3,12 @@ package pl.smarthouse.smartmonitoring.service;
 import static pl.smarthouse.smartmodule.model.actors.type.pca9685.Pca9685CommandType.WRITE_SERVO0_MICROSECONDS;
 
 import java.util.HashMap;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import pl.smarthouse.sharedobjects.dao.ModuleDao;
 import pl.smarthouse.smartmodule.model.actors.type.bme280.Bme280Response;
 import pl.smarthouse.smartmodule.model.actors.type.ds18b20.Ds18b20Result;
+import pl.smarthouse.smartmonitoring.model.IntCompareProperties;
 import pl.smarthouse.smartmonitoring.model.PrimitiveField;
 import pl.smarthouse.smartmonitoring.utils.PrimitiveFieldFinder;
 import utils.model.VentModuleDao;
@@ -20,7 +22,18 @@ class CompareProcessorTest {
     HashMap<String, PrimitiveField> primitiveFields =
         PrimitiveFieldFinder.findPrimitiveFields(moduleDao);
 
-    primitiveFields.keySet().stream().sorted().forEach(key -> System.out.println(key));
+    primitiveFields.keySet().stream().sorted().forEach(System.out::println);
+  }
+
+  @Test
+  void checkIfAllPropertiesSet() {
+    CompareProcessor compareProcessor = new CompareProcessor();
+
+    compareProcessor.addMap(
+        "first.object", IntCompareProperties.builder().saveEnabled(true).build());
+    Set<String> primitiveSet = Set.of("first.object", "second.object", "third.object");
+
+    compareProcessor.checkIfAllPropertiesSet(primitiveSet).subscribe();
   }
 
   private VentModuleDao createVentModuleDao() {

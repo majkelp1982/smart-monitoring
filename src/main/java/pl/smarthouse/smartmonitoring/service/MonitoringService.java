@@ -27,6 +27,9 @@ public class MonitoringService {
   public void process() {
     Mono.just(getPrimitiveFields(moduleDao))
         .flatMap(
+            primitiveFieldsMap ->
+                compareProcessor.checkIfAllPropertiesSet(primitiveFieldsMap.keySet()))
+        .flatMap(
             signal -> compareProcessor.checkIfSaveRequired(currentPrimitives, referencePrimitives))
         .flatMap(
             compare -> {

@@ -1,7 +1,7 @@
 package pl.smarthouse.smartmonitoring.service;
 
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -94,6 +94,8 @@ public class CompareProcessor {
         return isSaveRequired((double) currentValue, (double) referenceValue, compareProperties);
       case "boolean":
         return isSaveRequired((boolean) currentValue, (boolean) referenceValue, compareProperties);
+      case "enum":
+        return isSaveRequired((Enum) currentValue, (Enum) referenceValue, compareProperties);
       default:
         throw new ComparatorDefinitionException(
             String.format(
@@ -131,5 +133,38 @@ public class CompareProcessor {
       return Compare.OK;
     }
     return (currentValue != lastValue) ? Compare.SAVE_REQUIRED : Compare.OK;
+  }
+
+  private Compare isSaveRequired(
+      final Enum currentValue, final Enum lastValue, final CompareProperties compareProperties) {
+    if (!compareProperties.isSaveEnabled()) {
+      return Compare.OK;
+    }
+    return (!currentValue.equals(lastValue)) ? Compare.SAVE_REQUIRED : Compare.OK;
+  }
+
+  public Mono<Set<String>> checkIfAllPropertiesSet(Set<String> primitiveFieldsName) {
+    Set<String> missingCompareProperties = new HashSet<>();
+    return Flux.fromStream(primitiveFieldsName.stream())
+        .doOnNext(
+            name -> {
+              if (Objects.isNull(compareMap.get(name))) {
+                missingCompareProperties.add(name);
+              }
+            })
+        .collectList()
+        .thenReturn(missingCompareProperties)
+        .flatMap(
+            missingPropertiesSet -> {
+              if (!missingPropertiesSet.isEmpty()) {
+                return Mono.error(
+                    new ComparatorDefinitionException(
+                        String.format(
+                            "Compare properties missing for following primitive fields: %s",
+                            missingPropertiesSet.stream().sorted().collect(Collectors.toList()))));
+              } else {
+                return Mono.just(primitiveFieldsName);
+              }
+            });
   }
 }
