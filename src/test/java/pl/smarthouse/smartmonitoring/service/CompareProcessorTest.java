@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import pl.smarthouse.sharedobjects.dao.ModuleDao;
 import pl.smarthouse.smartmodule.model.actors.type.bme280.Bme280Response;
 import pl.smarthouse.smartmodule.model.actors.type.ds18b20.Ds18b20Result;
-import pl.smarthouse.smartmonitoring.model.IntCompareProperties;
+import pl.smarthouse.smartmonitoring.model.NumberCompareProperties;
 import pl.smarthouse.smartmonitoring.model.PrimitiveField;
 import pl.smarthouse.smartmonitoring.utils.PrimitiveFieldFinder;
 import utils.model.VentModuleDao;
@@ -30,7 +30,7 @@ class CompareProcessorTest {
     CompareProcessor compareProcessor = new CompareProcessor();
 
     compareProcessor.addMap(
-        "first.object", IntCompareProperties.builder().saveEnabled(true).build());
+        "first.object", NumberCompareProperties.builder().saveEnabled(true).build());
     Set<String> primitiveSet = Set.of("first.object", "second.object", "third.object");
 
     compareProcessor.checkIfAllPropertiesSet(primitiveSet).subscribe();

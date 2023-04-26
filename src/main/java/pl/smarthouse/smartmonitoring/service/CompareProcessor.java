@@ -75,52 +75,54 @@ public class CompareProcessor {
               "No compare properties set for: %s. Should be marked as transient, if field not needed",
               name));
     }
-    if (!currentValue
-        .getClass()
-        .getTypeName()
-        .toLowerCase()
-        .contains(compareProperties.getClassType().toString().toLowerCase())) {
+
+    String currentValueType = getCurrentValueTypeName(currentValue);
+
+    if (!currentValueType.contains(compareProperties.getClassType().getTypeName().toLowerCase())) {
       throw new CompareProcessorException(
           String.format(
-              "Provided compare property for field: %s is wrong. Expected type: %s, but is %s",
-              name, currentValue.getClass().getTypeName(), compareProperties.getClassType()));
+              "Provided compare property for field: %s is wrong. Expected type: %s, must contain name: %s",
+              name,
+              currentValueType,
+              compareProperties.getClassType().getTypeName().toLowerCase()));
     }
 
-    switch (compareProperties.getClassType().toString()) {
-      case "int":
-        return isSaveRequired((int) currentValue, (int) referenceValue, compareProperties);
-      case "double":
-      case "float":
-        return isSaveRequired((double) currentValue, (double) referenceValue, compareProperties);
-      case "boolean":
-        return isSaveRequired((boolean) currentValue, (boolean) referenceValue, compareProperties);
-      case "enum":
-        return isSaveRequired((Enum) currentValue, (Enum) referenceValue, compareProperties);
-      default:
-        throw new ComparatorDefinitionException(
-            String.format(
-                "Comparator is not defined for type: %s", currentValue.getClass().getTypeName()));
+    if (currentValueType.contains("number")) {
+      return isSaveRequired((Number) currentValue, (Number) referenceValue, compareProperties);
+    }
+
+    if (currentValueType.contains("boolean")) {
+      return isSaveRequired((boolean) currentValue, (boolean) referenceValue, compareProperties);
+    }
+
+    if (currentValueType.contains("enum")) {
+      return isSaveRequired((Enum) currentValue, (Enum) referenceValue, compareProperties);
+    }
+
+    // If not fount, throw an exception
+    throw new ComparatorDefinitionException(
+        String.format("Comparator is not defined for type: %s", currentValueType));
+  }
+
+  private String getCurrentValueTypeName(Object currentValue) {
+    String superClassTypeName = currentValue.getClass().getSuperclass().toString().toLowerCase();
+    if (superClassTypeName.contains("object")) {
+      return currentValue.getClass().toString().toLowerCase();
+    } else {
+      return superClassTypeName;
     }
   }
 
   private Compare isSaveRequired(
-      final int currentValue, final int lastValue, final CompareProperties compareProperties) {
-    if (!compareProperties.isSaveEnabled()) {
-      return Compare.OK;
-    }
-    return (Math.abs(currentValue - lastValue) > (int) compareProperties.getSaveTolerance())
-        ? Compare.SAVE_REQUIRED
-        : Compare.OK;
-  }
-
-  private Compare isSaveRequired(
-      final double currentValue,
-      final double lastValue,
+      final Number currentValue,
+      final Number lastValue,
       final CompareProperties compareProperties) {
     if (!compareProperties.isSaveEnabled()) {
       return Compare.OK;
     }
-    return (Math.abs(currentValue - lastValue) > (double) compareProperties.getSaveTolerance())
+    Number saveTolerance = (Number) compareProperties.getSaveTolerance();
+    return (Math.abs(currentValue.doubleValue() - lastValue.doubleValue())
+            >= saveTolerance.doubleValue())
         ? Compare.SAVE_REQUIRED
         : Compare.OK;
   }

@@ -1,13 +1,12 @@
-package pl.smarthouse.smartmonitoring.properties.bme280;
+package pl.smarthouse.smartmonitoring.properties.defaults;
 
 import pl.smarthouse.smartmonitoring.model.BooleanCompareProperties;
-import pl.smarthouse.smartmonitoring.model.DoubleCompareProperties;
-import pl.smarthouse.smartmonitoring.model.IntCompareProperties;
+import pl.smarthouse.smartmonitoring.model.NumberCompareProperties;
 import pl.smarthouse.smartmonitoring.service.CompareProcessor;
 
 public class Bme280DefaultProperties {
-  public static DoubleCompareProperties getTemperatureProperties() {
-    return DoubleCompareProperties.builder()
+  public static NumberCompareProperties getTemperatureProperties() {
+    return NumberCompareProperties.builder()
         .saveEnabled(true)
         .saveTolerance(0.3)
         .warning(0.5)
@@ -15,8 +14,8 @@ public class Bme280DefaultProperties {
         .build();
   }
 
-  public static IntCompareProperties getHumidityProperties() {
-    return IntCompareProperties.builder()
+  public static NumberCompareProperties getHumidityProperties() {
+    return NumberCompareProperties.builder()
         .saveEnabled(true)
         .saveTolerance(5)
         .warning(5)
@@ -24,8 +23,8 @@ public class Bme280DefaultProperties {
         .build();
   }
 
-  public static DoubleCompareProperties getPressureProperties() {
-    return DoubleCompareProperties.builder().saveEnabled(false).build();
+  public static NumberCompareProperties getPressureProperties() {
+    return NumberCompareProperties.builder().saveEnabled(false).build();
   }
 
   public static BooleanCompareProperties getErrorProperties() {
