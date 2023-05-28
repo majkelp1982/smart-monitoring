@@ -81,7 +81,7 @@ public class CompareProcessor {
     if (!currentValueType.contains(compareProperties.getClassType().getTypeName().toLowerCase())) {
       throw new CompareProcessorException(
           String.format(
-              "Provided compare property for field: %s is wrong. Expected type: %s, must contain name: %s",
+              "Provided compare property for field: %s is wrong. Expected type: %s, but provided is: %s",
               name,
               currentValueType,
               compareProperties.getClassType().getTypeName().toLowerCase()));
