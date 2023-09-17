@@ -4,6 +4,7 @@ import static pl.smarthouse.smartmonitoring.utils.CloneUtils.cloneObject;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
@@ -60,7 +61,10 @@ public class MonitoringService {
   }
 
   private HashMap<String, PrimitiveField> getPrimitiveFields(final ModuleDao moduleDao) {
-    currentPrimitives = PrimitiveFieldFinder.findPrimitiveFields(moduleDao);
+    if (Objects.isNull(currentPrimitives)) {
+      currentPrimitives = PrimitiveFieldFinder.findPrimitiveFields(moduleDao);
+    }
+
     return currentPrimitives;
   }
 

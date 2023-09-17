@@ -99,7 +99,7 @@ public class CompareProcessor {
       return isSaveRequired((Enum) currentValue, (Enum) referenceValue, compareProperties);
     }
 
-    // If not fount, throw an exception
+    // If not found, throw an exception
     throw new ComparatorDefinitionException(
         String.format("Comparator is not defined for type: %s", currentValueType));
   }
@@ -162,7 +162,7 @@ public class CompareProcessor {
                 return Mono.error(
                     new ComparatorDefinitionException(
                         String.format(
-                            "Compare properties missing for following primitive fields: %s",
+                            "Compare properties missing for following primitive fields: %s. If primitive is not needed, should be marked with @Transient",
                             missingPropertiesSet.stream().sorted().collect(Collectors.toList()))));
               } else {
                 return Mono.just(primitiveFieldsName);
