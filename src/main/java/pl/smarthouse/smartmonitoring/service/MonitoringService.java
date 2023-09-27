@@ -69,4 +69,8 @@ public class MonitoringService {
     currentPrimitives.forEach(
         (name, primitiveField) -> this.referencePrimitives.put(name, cloneObject(primitiveField)));
   }
+
+  public ModuleDao getModuleDao() {
+    return moduleDao;
+  }
 }
