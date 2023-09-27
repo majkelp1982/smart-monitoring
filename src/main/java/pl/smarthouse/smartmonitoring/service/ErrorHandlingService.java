@@ -1,8 +1,10 @@
 package pl.smarthouse.smartmonitoring.service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,7 +16,21 @@ import pl.smarthouse.smartmonitoring.model.ErrorPrediction;
 public class ErrorHandlingService {
   private final MonitoringService monitoringService;
   private final List<ErrorPrediction> errorPredictions;
-  private final List<ErrorPrediction> errorsPendingAcknowledge;
+  private final HashMap<Integer, ErrorPrediction> errorsPendingAcknowledge;
+
+  public List<ErrorPrediction> getActiveErrorPredictions() {
+    return errorPredictions.stream()
+        .filter(errorPrediction -> errorPrediction.isActive())
+        .collect(Collectors.toList());
+  }
+
+  public List<ErrorPrediction> getErrorPredictions() {
+    return errorPredictions;
+  }
+
+  public HashMap<Integer, ErrorPrediction> getErrorsPendingAcknowledge() {
+    return errorsPendingAcknowledge;
+  }
 
   public void process() {
     errorPredictions.forEach(this::handleErrorPrediction);
@@ -48,7 +64,8 @@ public class ErrorHandlingService {
   private void moveToErrorsPendingAcknowledgeAndResetState(ErrorPrediction errorPrediction)
       throws CloneNotSupportedException {
     errorPrediction.setEndTimestamp(LocalDateTime.now());
-    errorsPendingAcknowledge.add((ErrorPrediction) errorPrediction.clone());
+    ErrorPrediction errorPredictionCloned = (ErrorPrediction) errorPrediction.clone();
+    errorsPendingAcknowledge.put(errorPredictionCloned.hashCode(), errorPredictionCloned);
     resetErrorPrediction(errorPrediction);
   }
 
@@ -65,6 +82,14 @@ public class ErrorHandlingService {
     errorPrediction.setBeginTimestamp(null);
     errorPrediction.setEndTimestamp(null);
     errorPrediction.getStateChangedListener().accept(false);
+  }
+
+  public void acknowledgePendingError(Integer hashcode) {
+    errorsPendingAcknowledge.remove(hashcode);
+  }
+
+  public void clearPendingError() {
+    errorsPendingAcknowledge.clear();
   }
 
   private final Predicate<ErrorPrediction> isEnabled = ErrorPrediction::isEnable;

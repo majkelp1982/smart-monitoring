@@ -3,6 +3,7 @@ package pl.smarthouse.smartmonitoring.model;
 import java.time.LocalDateTime;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import pl.smarthouse.sharedobjects.dao.ModuleDao;
 @Getter
 @Setter
 @RequiredArgsConstructor
+@EqualsAndHashCode
 public class ErrorPrediction implements Cloneable {
   private boolean enable;
   private final Predicate<ModuleDao> predicate;
