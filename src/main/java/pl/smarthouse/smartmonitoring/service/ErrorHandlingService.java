@@ -19,9 +19,7 @@ public class ErrorHandlingService {
   private final HashMap<Integer, ErrorPrediction> errorsPendingAcknowledge;
 
   public List<ErrorPrediction> getActiveErrorPredictions() {
-    return errorPredictions.stream()
-        .filter(errorPrediction -> errorPrediction.isActive())
-        .collect(Collectors.toList());
+    return errorPredictions.stream().filter(ErrorPrediction::isActive).collect(Collectors.toList());
   }
 
   public List<ErrorPrediction> getErrorPredictions() {
@@ -34,6 +32,12 @@ public class ErrorHandlingService {
 
   public void process() {
     errorPredictions.forEach(this::handleErrorPrediction);
+    monitoringService
+        .getModuleDao()
+        .setError(errorPredictions.stream().anyMatch(ErrorPrediction::isActive));
+    monitoringService
+        .getModuleDao()
+        .setErrorPendingAcknowledge(!errorsPendingAcknowledge.isEmpty());
   }
 
   private void handleErrorPrediction(ErrorPrediction errorPrediction) {
