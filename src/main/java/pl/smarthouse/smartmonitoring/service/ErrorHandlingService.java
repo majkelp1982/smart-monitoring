@@ -3,6 +3,7 @@ package pl.smarthouse.smartmonitoring.service;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,31 @@ public class ErrorHandlingService {
 
   public HashMap<Integer, ErrorPrediction> getErrorsPendingAcknowledge() {
     return errorsPendingAcknowledge;
+  }
+
+  public void add(ErrorPrediction errorPrediction) {
+    getErrorPrediction(errorPrediction.getMessage())
+        .ifPresent(
+            foundError -> {
+              throw new IllegalArgumentException(
+                  String.format(
+                      "Duplicated error message. Error already registered: %s", foundError));
+            });
+
+    errorPredictions.add(errorPrediction);
+  }
+
+  private Optional<ErrorPrediction> getErrorPrediction(String message) {
+    return errorPredictions.stream()
+        .filter(errorPrediction -> message.equalsIgnoreCase(errorPrediction.getMessage()))
+        .findFirst();
+  }
+
+  public void setEnabled(String message, boolean enabled) {
+    getErrorPrediction(message)
+        .ifPresentOrElse(
+            errorPrediction -> errorPrediction.setEnable(enabled),
+            () -> new IllegalArgumentException("Given error message not exists"));
   }
 
   public void process() {
