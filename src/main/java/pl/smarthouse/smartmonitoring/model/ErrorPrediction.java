@@ -12,7 +12,7 @@ import pl.smarthouse.sharedobjects.dao.ModuleDao;
 @RequiredArgsConstructor
 public class ErrorPrediction implements Cloneable {
   private boolean enable;
-  @NonNull private final Predicate<ModuleDao> predicate;
+  @NonNull private final Predicate<? extends ModuleDao> predicate;
   @NonNull private final String message;
   private LocalDateTime beginTimestamp;
   private LocalDateTime endTimestamp;

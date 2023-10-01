@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import pl.smarthouse.sharedobjects.dao.ModuleDao;
 import pl.smarthouse.smartmonitoring.model.ErrorPrediction;
 
 @Service
@@ -37,9 +38,10 @@ public class ErrorHandlingService {
             foundError -> {
               throw new IllegalArgumentException(
                   String.format(
-                      "Duplicated error message. Error already registered: %s", foundError));
+                      "Duplicated error message. Error already registered: %s",
+                      foundError.getMessage()));
             });
-
+    errorPrediction.setEnable(true);
     errorPredictions.add(errorPrediction);
   }
 
@@ -53,7 +55,9 @@ public class ErrorHandlingService {
     getErrorPrediction(message)
         .ifPresentOrElse(
             errorPrediction -> errorPrediction.setEnable(enabled),
-            () -> new IllegalArgumentException("Given error message not exists"));
+            () ->
+                log.error(
+                    "Given error message: {}, not exists. Enabled will be not assign", message));
   }
 
   public void process() {
@@ -67,33 +71,40 @@ public class ErrorHandlingService {
   }
 
   private void handleErrorPrediction(ErrorPrediction errorPrediction) {
+    boolean errorTest =
+        moduleDaoTestResult(errorPrediction.getPredicate(), monitoringService.getModuleDao());
+    if (!errorPrediction.isActive() && errorTest) {
+      setErrorPredictionActive(errorPrediction);
+      log.error("ACTIVE: {}", errorPrediction.getMessage());
+    } else {
+      if (errorPrediction.isActive() && !errorTest) {
+        setErrorPredictionPendingAcknowledge(errorPrediction);
+        log.error("PENDING: {}", errorPrediction.getMessage());
+      }
+    }
+
     if (isActiveButNotEnabled.or(isNotActiveButPendingAcknowledge).test(errorPrediction)) {
       try {
         log.info(
-            "Error: {} is not more active. Moving to pending acknowledge",
+            "error: [{}] is not more active. Moving to pending acknowledge",
             errorPrediction.getMessage());
         moveToErrorsPendingAcknowledgeAndResetState(errorPrediction);
       } catch (CloneNotSupportedException e) {
         log.error(
-            "Error: {} should be moved to pending acknowledge but error occurred. Error: {}",
+            "error: {} should be moved to pending acknowledge but exception occurred. Error: {}",
             errorPrediction.getMessage(),
             e);
         throw new RuntimeException(e);
       }
-      return;
     }
-    if (!isEnabled.test(errorPrediction)
-        || !errorPrediction.getPredicate().test(monitoringService.getModuleDao())) {
-      return;
-    }
+  }
 
-    setErrorPredictionActive(errorPrediction);
-    log.error("Module error discovered. Message: {}", errorPrediction.getMessage());
+  private boolean moduleDaoTestResult(Predicate predicate, ModuleDao moduleDao) {
+    return predicate.test(moduleDao);
   }
 
   private void moveToErrorsPendingAcknowledgeAndResetState(ErrorPrediction errorPrediction)
       throws CloneNotSupportedException {
-    errorPrediction.setEndTimestamp(LocalDateTime.now());
     ErrorPrediction errorPredictionCloned = (ErrorPrediction) errorPrediction.clone();
     errorsPendingAcknowledge.put(errorPredictionCloned.hashCode(), errorPredictionCloned);
     resetErrorPrediction(errorPrediction);
@@ -101,9 +112,16 @@ public class ErrorHandlingService {
 
   private void setErrorPredictionActive(ErrorPrediction errorPrediction) {
     errorPrediction.setActive(true);
-    errorPrediction.setPendingAcknowledge(true);
+    errorPrediction.setPendingAcknowledge(false);
     errorPrediction.setBeginTimestamp(LocalDateTime.now());
     errorPrediction.getStateChangedListener().accept(true);
+  }
+
+  private void setErrorPredictionPendingAcknowledge(ErrorPrediction errorPrediction) {
+    errorPrediction.setActive(false);
+    errorPrediction.setPendingAcknowledge(true);
+    errorPrediction.setEndTimestamp(LocalDateTime.now());
+    errorPrediction.getStateChangedListener().accept(false);
   }
 
   private void resetErrorPrediction(ErrorPrediction errorPrediction) {
@@ -111,7 +129,6 @@ public class ErrorHandlingService {
     errorPrediction.setPendingAcknowledge(false);
     errorPrediction.setBeginTimestamp(null);
     errorPrediction.setEndTimestamp(null);
-    errorPrediction.getStateChangedListener().accept(false);
   }
 
   public void acknowledgePendingError(Integer hashcode) {

@@ -19,7 +19,7 @@ public class Scheduler {
     monitoringService.process();
   }
 
-  @Scheduled(initialDelay = 5000, fixedDelay = 10000)
+  @Scheduled(initialDelay = 60000, fixedDelay = 10000)
   void errorHandlingScheduler() {
     errorHandlingService.process();
   }
