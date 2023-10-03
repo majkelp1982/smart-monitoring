@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import pl.smarthouse.smartmonitoring.model.ErrorPrediction;
+import pl.smarthouse.sharedobjects.dto.error.ErrorPrediction;
 import pl.smarthouse.smartmonitoring.service.ErrorHandlingService;
 import reactor.core.publisher.Mono;
 
