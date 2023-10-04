@@ -2,6 +2,7 @@ package pl.smarthouse.smartmonitoring.controller;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import pl.smarthouse.sharedobjects.dto.error.ErrorPrediction;
@@ -20,7 +21,7 @@ public class ErrorHandlingController {
   }
 
   @GetMapping(value = "/active")
-  public Mono<List<ErrorPrediction>> getActiveErrors() {
+  public Mono<Map<Integer, ErrorPrediction>> getActiveErrors() {
     return Mono.just(errorHandlingService.getActiveErrorPredictions());
   }
 

@@ -3,6 +3,7 @@ package pl.smarthouse.smartmonitoring.service;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -20,8 +21,10 @@ public class ErrorHandlingService {
   private final List<ErrorPrediction> errorPredictions;
   private final HashMap<Integer, ErrorPrediction> errorsPendingAcknowledge;
 
-  public List<ErrorPrediction> getActiveErrorPredictions() {
-    return errorPredictions.stream().filter(ErrorPrediction::isActive).collect(Collectors.toList());
+  public Map<Integer, ErrorPrediction> getActiveErrorPredictions() {
+    return errorPredictions.stream()
+        .filter(ErrorPrediction::isActive)
+        .collect(Collectors.toMap(ErrorPrediction::hashCode, errorPredictions -> errorPredictions));
   }
 
   public List<ErrorPrediction> getErrorPredictions() {
