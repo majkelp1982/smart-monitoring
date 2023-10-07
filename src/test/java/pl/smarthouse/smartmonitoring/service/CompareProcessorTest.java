@@ -20,7 +20,7 @@ class CompareProcessorTest {
   void findingFields() {
     ModuleDao moduleDao = createVentModuleDao();
     HashMap<String, PrimitiveField> primitiveFields =
-        PrimitiveFieldFinder.findPrimitiveFields(moduleDao);
+        PrimitiveFieldFinder.findPrimitiveFields(moduleDao.getClass(), moduleDao);
 
     primitiveFields.keySet().stream().sorted().forEach(System.out::println);
   }

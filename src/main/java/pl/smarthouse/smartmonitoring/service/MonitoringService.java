@@ -26,6 +26,7 @@ public class MonitoringService {
 
   public void process() {
     Mono.just(getPrimitiveFields(moduleDao))
+        .map(primitiveFieldHashMap -> currentPrimitives = primitiveFieldHashMap)
         .flatMap(
             primitiveFieldsMap ->
                 compareProcessor.checkIfAllPropertiesSet(primitiveFieldsMap.keySet()))
@@ -54,14 +55,18 @@ public class MonitoringService {
 
   public void setModuleDaoObject(final ModuleDao moduleDao) {
     this.moduleDao = moduleDao;
-    getPrimitiveFields(moduleDao);
+    currentPrimitives = getPrimitiveFields(moduleDao);
     referencePrimitives = new HashMap<>();
     cloneCurrentPrimitiveFieldsToReferenceMap();
   }
 
   private HashMap<String, PrimitiveField> getPrimitiveFields(final ModuleDao moduleDao) {
-    currentPrimitives = PrimitiveFieldFinder.findPrimitiveFields(moduleDao);
-    return currentPrimitives;
+    HashMap<String, PrimitiveField> superClassPrimitives =
+        PrimitiveFieldFinder.findPrimitiveFields(moduleDao.getClass().getSuperclass(), moduleDao);
+    HashMap<String, PrimitiveField> moduleClassPrimitives =
+        PrimitiveFieldFinder.findPrimitiveFields(moduleDao.getClass(), moduleDao);
+    moduleClassPrimitives.putAll(superClassPrimitives);
+    return moduleClassPrimitives;
   }
 
   private void cloneCurrentPrimitiveFieldsToReferenceMap() {

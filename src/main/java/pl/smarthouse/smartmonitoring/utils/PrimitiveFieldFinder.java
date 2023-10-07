@@ -7,9 +7,8 @@ import pl.smarthouse.smartmonitoring.model.PrimitiveField;
 
 public class PrimitiveFieldFinder {
 
-  public static HashMap<String, PrimitiveField> findPrimitiveFields(Object object) {
+  public static HashMap<String, PrimitiveField> findPrimitiveFields(Class<?> clazz, Object object) {
     HashMap<String, PrimitiveField> primitiveFields = new HashMap<>();
-    Class<?> clazz = object.getClass();
     Field[] fields = clazz.getDeclaredFields();
 
     for (Field field : fields) {
@@ -32,7 +31,7 @@ public class PrimitiveFieldFinder {
         primitiveFields.put(fieldName, new PrimitiveField(getFieldObject(object, field)));
       } else if (!fieldType.isPrimitive() && !isWrapperType(fieldType) && !fieldType.isArray()) {
         Object fieldValue = getFieldObject(object, field);
-        findPrimitiveFields(fieldValue)
+        findPrimitiveFields(fieldValue.getClass(), fieldValue)
             .forEach(
                 (key, primitiveField) ->
                     primitiveFields.put(fieldName + "." + key, primitiveField));
