@@ -10,15 +10,21 @@ public class RdbDimmerDefaultProperties {
   }
 
   private static BooleanCompareProperties getBooleanProperties() {
-    return BooleanCompareProperties.builder().saveEnabled(false).build();
+    return BooleanCompareProperties.builder().saveEnabled(true).build();
   }
 
   public static void setDefaultProperties(
       CompareProcessor compareProcessor, String sensorFullName) {
-    compareProcessor.addMap(sensorFullName + ".goalPower", getNumberCompareProperties());
-    compareProcessor.addMap(sensorFullName + ".incremental", getBooleanProperties());
-    compareProcessor.addMap(sensorFullName + ".msDelay", getNumberCompareProperties());
-    compareProcessor.addMap(sensorFullName + ".power", getNumberCompareProperties());
-    compareProcessor.addMap(sensorFullName + ".state", getBooleanProperties());
+    compareProcessor.addMap(sensorFullName + ".forceMax", getBooleanProperties());
+    compareProcessor.addMap(sensorFullName + ".forceMin", getBooleanProperties());
+    compareProcessor.addMap(
+        sensorFullName + ".rdbDimmerResponse.goalPower", getNumberCompareProperties());
+    compareProcessor.addMap(
+        sensorFullName + ".rdbDimmerResponse.incremental", getBooleanProperties());
+    compareProcessor.addMap(
+        sensorFullName + ".rdbDimmerResponse.msDelay", getNumberCompareProperties());
+    compareProcessor.addMap(
+        sensorFullName + ".rdbDimmerResponse.power", getNumberCompareProperties());
+    compareProcessor.addMap(sensorFullName + ".rdbDimmerResponse.state", getBooleanProperties());
   }
 }
