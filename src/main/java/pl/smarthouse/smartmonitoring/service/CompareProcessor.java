@@ -64,9 +64,15 @@ public class CompareProcessor {
   }
 
   public Compare checkIfSaveRequiredByValue(
-      final @NonNull Object currentValue,
-      @NonNull final Object referenceValue,
-      @NonNull final String name) {
+      final Object currentValue, final Object referenceValue, final @NonNull String name) {
+    if (Objects.isNull(currentValue)) {
+      log.error("Skipping: {}, current value is null", name);
+      return Compare.OK;
+    }
+    if (Objects.isNull(referenceValue)) {
+      log.error("Skipping: {}, reference value is null", name);
+      return Compare.OK;
+    }
     final CompareProperties compareProperties = compareMap.get(name);
 
     if (Objects.isNull(compareProperties)) {

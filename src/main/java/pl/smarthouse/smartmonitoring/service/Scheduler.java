@@ -14,7 +14,7 @@ public class Scheduler {
   private final MonitoringService monitoringService;
   private final ErrorHandlingService errorHandlingService;
 
-  @Scheduled(initialDelay = 5000, fixedDelay = 10000)
+  @Scheduled(initialDelay = 60000, fixedDelay = 10000)
   void monitoringScheduler() {
     monitoringService.process();
   }
