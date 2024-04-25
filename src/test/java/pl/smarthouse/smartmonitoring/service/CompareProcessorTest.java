@@ -38,7 +38,7 @@ class CompareProcessorTest {
 
   private VentModuleDao createVentModuleDao() {
     return VentModuleDao.builder()
-        .moduleName("testModule")
+        .type("testModule")
         .zoneDaoHashMap(new HashMap<>())
         .fans(
             Fans.builder()

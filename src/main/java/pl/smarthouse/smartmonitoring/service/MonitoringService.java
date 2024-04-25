@@ -37,7 +37,7 @@ public class MonitoringService {
               if (Compare.SAVE_REQUIRED.equals(compare)) {
                 moduleDao.setSaveTimestamp(LocalDateTime.now());
                 return reactiveMongoTemplate
-                    .save(moduleDao, moduleDao.getModuleName().toLowerCase())
+                    .save(moduleDao, moduleDao.getType().toLowerCase())
                     .doOnSuccess(signal -> cloneCurrentPrimitiveFieldsToReferenceMap())
                     .doOnSuccess(signal -> log.info("Save dao object successful"));
               } else {
