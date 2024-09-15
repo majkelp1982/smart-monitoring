@@ -49,6 +49,7 @@
             <groupId>pl.smarthouse</groupId>
             <artifactId>smart-module</artifactId>
             <version>${smart.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>pl.smarthouse</groupId>
