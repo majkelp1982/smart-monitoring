@@ -3,6 +3,8 @@ package pl.smarthouse.smartmonitoring.utils;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.Objects;
+import pl.smarthouse.smartmonitoring.exception.InvalidValueException;
 import pl.smarthouse.smartmonitoring.model.PrimitiveField;
 
 public class PrimitiveFieldFinder {
@@ -31,6 +33,10 @@ public class PrimitiveFieldFinder {
         primitiveFields.put(fieldName, new PrimitiveField(getFieldObject(object, field)));
       } else if (!fieldType.isPrimitive() && !isWrapperType(fieldType) && !fieldType.isArray()) {
         Object fieldValue = getFieldObject(object, field);
+        if (Objects.isNull(fieldValue)) {
+          throw new InvalidValueException(
+              String.format("Filed value is null. field: %s, object: %s", field, object));
+        }
         findPrimitiveFields(fieldValue.getClass(), fieldValue)
             .forEach(
                 (key, primitiveField) ->
