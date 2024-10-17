@@ -3,6 +3,8 @@ package pl.smarthouse.smartmonitoring.utils;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import pl.smarthouse.smartmonitoring.exception.InvalidValueException;
 import pl.smarthouse.smartmonitoring.model.PrimitiveField;
@@ -25,7 +27,9 @@ public class PrimitiveFieldFinder {
         continue;
       }
 
-      if (fieldType.isPrimitive() || fieldType.isEnum()) {
+      if (Map.class.isAssignableFrom(fieldType) || List.class.isAssignableFrom(fieldType)) {
+        primitiveFields.put(fieldName, new PrimitiveField(getFieldObject(object, field)));
+      } else if (fieldType.isPrimitive() || fieldType.isEnum()) {
         primitiveFields.put(fieldName, new PrimitiveField(getFieldObject(object, field)));
       } else if (isWrapperType(fieldType)) {
         primitiveFields.put(fieldName, new PrimitiveField(getFieldObject(object, field)));

@@ -105,6 +105,10 @@ public class CompareProcessor {
       return isSaveRequired((Enum) currentValue, (Enum) referenceValue, compareProperties);
     }
 
+    if (currentValueType.contains("map")) {
+      return isSaveRequired(currentValue.hashCode(), referenceValue.hashCode(), compareProperties);
+    }
+
     // If not found, throw an exception
     throw new ComparatorDefinitionException(
         String.format("Comparator is not defined for type: %s", currentValueType));
